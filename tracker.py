@@ -1,6 +1,10 @@
 import datetime
 import requests
-from config import SENDGRID_API_KEY, SENDGRID_TEMPLATE_ID, FROM_EMAIL, TO_EMAILS
+from config import (
+    SENDGRID_API_KEY, SENDGRID_TEMPLATE_ID, 
+    FROM_EMAIL, TO_EMAILS,
+    LOCATION_CODES, CODE_DATES
+)
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
@@ -8,6 +12,11 @@ from sendgrid.helpers.mail import Mail
 Use this link to find  the codes of the locations you are interested in
 https://ttp.cbp.dhs.gov/schedulerapi/locations/?temporary=false&inviteOnly=false&operational=true&serviceName=Global%20Entry
 """
+def log(*args):
+    log_message = '\t'.join(args)
+    print(log_message)
+    with open(f'tracker.log', 'a') as logfile:
+        logfile.write(f'{log_message}\n')
 
 def send_dynamic_email(appointments):
     message = Mail(
@@ -20,14 +29,10 @@ def send_dynamic_email(appointments):
     message.template_id = SENDGRID_TEMPLATE_ID
     try:
         sg = SendGridAPIClient(SENDGRID_API_KEY)
-        response = sg.send(message)
-        code, body, headers = response.status_code, response.body, response.headers
-        print(f"Response code: {code}")
-        print(f"Response headers: {headers}")
-        print(f"Response body: {body}")
-        print("Dynamic Messages Sent!")
+        sg.send(message)
+        log('Email Sent!')
     except Exception as e:
-        print("Error: {0}".format(e))
+        log(f'Error: {e}')
 
 
 def get_appointments(location_codes, code_dates):
@@ -48,23 +53,15 @@ def get_appointments(location_codes, code_dates):
     return appointments
 
 if __name__ == '__main__':
-    location_codes = {
-        5360: 'Las Vegas Enrollment Center',
-        # 5447: 'Sanford Global Entry Enrollment Center',
-        # 5380: 'Orlando International Airport',
-        # 8020: 'Tampa Enrollment Center',
-    }
+    log_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M')
+    log(log_time, 'New Attempt')
 
-    code_dates = {
-        5360: '2024-10-10T00:00',
-        # 5447: '10/10/2024',
-        # 5380: '10/10/2024',
-        # 8020: '10/10/2024',
-    }
-
+    location_codes = LOCATION_CODES
+    code_dates = CODE_DATES
+    
     appointments = get_appointments(location_codes, code_dates)
     if appointments:
-        print(appointments)
+        log(*appointments)
         send_dynamic_email(appointments)
     else:
-        print('No Appointments available')
+        log('No Appointments available')
