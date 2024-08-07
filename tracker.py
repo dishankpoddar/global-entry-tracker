@@ -1,10 +1,34 @@
 import datetime
 import requests
+from config import SENDGRID_API_KEY, SENDGRID_TEMPLATE_ID, FROM_EMAIL, TO_EMAILS
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 """
 Use this link to find  the codes of the locations you are interested in
 https://ttp.cbp.dhs.gov/schedulerapi/locations/?temporary=false&inviteOnly=false&operational=true&serviceName=Global%20Entry
 """
+
+def send_dynamic_email(appointments):
+    message = Mail(
+        from_email=FROM_EMAIL,
+        to_emails=TO_EMAILS)
+    message.dynamic_template_data = {
+        'subject': 'New Appointment Available for Global Entry',
+        'appointments': appointments,
+    }
+    message.template_id = SENDGRID_TEMPLATE_ID
+    try:
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+        code, body, headers = response.status_code, response.body, response.headers
+        print(f"Response code: {code}")
+        print(f"Response headers: {headers}")
+        print(f"Response body: {body}")
+        print("Dynamic Messages Sent!")
+    except Exception as e:
+        print("Error: {0}".format(e))
+
 
 def get_appointments(location_codes, code_dates):
     appointments = []
@@ -32,10 +56,15 @@ if __name__ == '__main__':
     }
 
     code_dates = {
-        5360: '2024-11-10T00:00',
+        5360: '2024-10-10T00:00',
         # 5447: '10/10/2024',
         # 5380: '10/10/2024',
         # 8020: '10/10/2024',
     }
 
     appointments = get_appointments(location_codes, code_dates)
+    if appointments:
+        print(appointments)
+        send_dynamic_email(appointments)
+    else:
+        print('No Appointments available')
