@@ -1,5 +1,6 @@
 import datetime
 import requests
+import os
 from config import (
     SENDGRID_API_KEY, SENDGRID_TEMPLATE_ID, 
     FROM_EMAIL, TO_EMAILS,
@@ -15,7 +16,9 @@ https://ttp.cbp.dhs.gov/schedulerapi/locations/?temporary=false&inviteOnly=false
 def log(*args):
     log_message = '\t'.join(args)
     print(log_message)
-    with open(f'tracker.log', 'a') as logfile:
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    file_path = os.path.join(dir_path, 'tracker.log')
+    with open(file_path, 'a') as logfile:
         logfile.write(f'{log_message}\n')
 
 def send_dynamic_email(appointments):
